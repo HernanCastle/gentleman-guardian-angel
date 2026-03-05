@@ -254,17 +254,57 @@ execute_codex() {
 }
 
 execute_opencode() {
-  local model="$1"
+  local model="${1:-claude-sonnet-4-6}"
   local prompt="$2"
-  
-  # OpenCode CLI accepts prompt as positional argument
-  # opencode run [message..] - message is a positional array
-  if [[ -n "$model" ]]; then
-    opencode run --model "$model" "$prompt" 2>&1
-  else
-    opencode run "$prompt" 2>&1
-  fi
-  return $?
+
+  # FIX: passing $prompt as a CLI argument fails with "Argument list too long"
+  # when reviewing large PRs (Linux kernel ARG_MAX ~2MB limit on execve).
+  # Solution: write prompt to a temp file using printf (bash builtin, no execve,
+  # no ARG_MAX limit), then call the Anthropic API directly via Python,
+  # passing only the small file path as argument.
+  local tmpfile
+  tmpfile=$(mktemp /tmp/opencode-prompt-XXXXXX)
+  printf '%s' "$prompt" > "$tmpfile"
+
+  python3 - "$tmpfile" "$model" << 'PYEOF'
+import json, sys, urllib.request, urllib.error, os
+
+prompt_file = sys.argv[1]
+model = sys.argv[2]
+
+with open(prompt_file) as f:
+    prompt = f.read()
+
+data = json.dumps({
+    "model": model,
+    "max_tokens": 8096,
+    "messages": [{"role": "user", "content": prompt}]
+}).encode()
+
+req = urllib.request.Request(
+    "https://api.anthropic.com/v1/messages",
+    data=data,
+    headers={
+        "x-api-key": os.environ.get("ANTHROPIC_API_KEY", ""),
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+    }
+)
+try:
+    with urllib.request.urlopen(req) as resp:
+        result = json.loads(resp.read())
+        print(result["content"][0]["text"])
+except urllib.error.HTTPError as e:
+    print(f"API Error {e.code}: {e.read().decode()}", file=sys.stderr)
+    sys.exit(1)
+except Exception as e:
+    print(f"Error: {e}", file=sys.stderr)
+    sys.exit(1)
+PYEOF
+
+  local status=$?
+  rm -f "$tmpfile"
+  return $status
 }
 
 execute_ollama() {
