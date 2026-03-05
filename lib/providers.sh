@@ -250,6 +250,10 @@ execute_opencode() {
   local model="${1:-claude-sonnet-4-6}"
   local prompt="$2"
 
+  # OpenCode uses "provider/model" format (e.g. "anthropic/claude-sonnet-4-6"),
+  # but the Anthropic API only accepts the bare model ID. Strip the prefix.
+  model="${model#*/}"
+
   # FIX: passing $prompt as a CLI argument fails with "Argument list too long"
   # when reviewing large PRs (Linux kernel ARG_MAX ~2MB limit on execve).
   # Solution: write prompt to a temp file using printf (bash builtin, no execve,
