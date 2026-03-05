@@ -61,14 +61,7 @@ validate_provider() {
       fi
       ;;
     opencode)
-      if ! command -v opencode &> /dev/null; then
-        echo -e "${RED}❌ OpenCode CLI not found${NC}"
-        echo ""
-        echo "Install OpenCode CLI:"
-        echo "  https://opencode.ai"
-        echo ""
-        return 1
-      fi
+      # No CLI check needed: execute_opencode calls the Anthropic API directly
       ;;
     ollama)
       if ! command -v ollama &> /dev/null; then
