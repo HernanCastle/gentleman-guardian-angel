@@ -839,11 +839,7 @@ execute_provider_with_timeout() {
       if [[ "$model" == "$provider" ]]; then
         model=""
       fi
-      if [[ -n "$model" ]]; then
-        execute_with_timeout "$timeout" "OpenCode" opencode run --model "$model" "$prompt"
-      else
-        execute_with_timeout "$timeout" "OpenCode" opencode run "$prompt"
-      fi
+      execute_with_timeout "$timeout" "OpenCode" execute_opencode "$model" "$prompt"
       ;;
     ollama)
       local model="${provider#*:}"
