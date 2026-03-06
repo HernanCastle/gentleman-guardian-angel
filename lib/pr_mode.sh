@@ -214,16 +214,18 @@ EOF
 EOF
   fi
 
-  # Add file contents
-  while IFS= read -r file; do
-    if [[ -n "$file" ]]; then
-      echo ""
-      echo "--- FILE: $file ---"
-      if [[ -f "$file" ]]; then
-        cat "$file"
+  # Add file contents (skipped in diff_only mode — the diff already contains the changes)
+  if [[ "$diff_only" != "true" ]]; then
+    while IFS= read -r file; do
+      if [[ -n "$file" ]]; then
+        echo ""
+        echo "--- FILE: $file ---"
+        if [[ -f "$file" ]]; then
+          cat "$file"
+        fi
       fi
-    fi
-  done <<< "$files"
+    done <<< "$files"
+  fi
 
   cat << 'EOF'
 

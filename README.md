@@ -1069,11 +1069,11 @@ jobs:
 
       - name: Run AI Review
         run: |
-          # Review all files changed in the PR
-          gga run --pr-mode
+          # Review only the changed lines in the PR (faster, cheaper)
+          gga run --pr-mode --diff-only
 
-          # Or with diffs only (faster, cheaper)
-          # gga run --pr-mode --diff-only
+          # Or full file review (more context, higher token usage)
+          # gga run --pr-mode
 ```
 
 #### GitLab CI
