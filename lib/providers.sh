@@ -869,12 +869,19 @@ execute_provider_with_timeout() {
   local timeout="${3:-300}"
   local base_provider="${provider%%:*}"
 
+  # Write prompt to a temp file to avoid ARG_MAX when prompt is very large.
+  # Passing large strings as CLI arguments to a new bash process hits the kernel
+  # ARG_MAX limit (~2MB on Linux). Passing a file path is always safe.
+  local _prompt_file
+  _prompt_file=$(mktemp "${TMPDIR:-/tmp}/gga_prompt.XXXXXX")
+  printf '%s' "$prompt" > "$_prompt_file"
+
   case "$base_provider" in
     claude)
-      execute_with_timeout "$timeout" "Claude" bash -c "printf '%s' \"\$1\" | claude --print 2>&1" -- "$prompt"
+      execute_with_timeout "$timeout" "Claude" bash -c "claude --print < \"\$1\" 2>&1" -- "$_prompt_file"
       ;;
     gemini)
-      execute_with_timeout "$timeout" "Gemini" bash -c "printf '%s' \"\$1\" | gemini --model \"\${GEMINI_MODEL:-gemini-2.5-pro}\" 2>&1" -- "$prompt"
+      execute_with_timeout "$timeout" "Gemini" bash -c "gemini --model \"\${GEMINI_MODEL:-gemini-2.5-pro}\" < \"\$1\" 2>&1" -- "$_prompt_file"
       ;;
     codex)
       execute_with_timeout "$timeout" "Codex" codex exec "$prompt"
@@ -917,4 +924,7 @@ execute_provider_with_timeout() {
       execute_with_timeout "$timeout" "$base_provider" execute_provider "$provider" "$prompt"
       ;;
   esac
+  local _ret=$?
+  rm -f "$_prompt_file"
+  return $_ret
 }
