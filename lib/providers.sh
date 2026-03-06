@@ -267,8 +267,10 @@ execute_gemini() {
     return 1
   fi
   
-  gemini -p "$prompt" 2>&1
-  return $?
+  # FIX: passing $prompt as -p argument fails with "Argument list too long"
+  # when reviewing large PRs (ARG_MAX limit). Use stdin pipe instead.
+  printf '%s' "$prompt" | gemini 2>&1
+  return "${PIPESTATUS[1]}"
 }
 
 is_gemini_authenticated() {
@@ -871,7 +873,7 @@ execute_provider_with_timeout() {
       execute_with_timeout "$timeout" "Claude" bash -c "printf '%s' \"\$1\" | claude --print 2>&1" -- "$prompt"
       ;;
     gemini)
-      execute_with_timeout "$timeout" "Gemini" gemini -p "$prompt"
+      execute_with_timeout "$timeout" "Gemini" bash -c "printf '%s' \"\$1\" | gemini 2>&1" -- "$prompt"
       ;;
     codex)
       execute_with_timeout "$timeout" "Codex" codex exec "$prompt"

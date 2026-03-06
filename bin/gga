@@ -814,6 +814,11 @@ cmd_run() {
     PROMPT=$(build_prompt "$RULES" "$files_to_review" "$use_staged" "$commit_msg")
   fi
 
+  # Log prompt size so ARG_MAX issues are easy to diagnose
+  local prompt_chars=${#PROMPT}
+  local prompt_tokens=$(( prompt_chars / 4 ))
+  log_info "Prompt size: ~${prompt_tokens} tokens (${prompt_chars} chars)"
+
   # Execute review with timeout and progress feedback
   log_info "Sending to $PROVIDER for review (timeout: ${TIMEOUT}s)..."
   echo ""
