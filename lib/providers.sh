@@ -15,7 +15,38 @@
 
 # Colors (in case sourced independently)
 RED='\033[0;31m'
+YELLOW='\033[0;33m'
+GREEN='\033[0;32m'
 NC='\033[0m'
+
+# ============================================================================
+# Auto-install Helper
+# ============================================================================
+
+# Try to install a CLI tool via npm.
+# Usage: try_auto_install <label> <npm_package> <command_to_check>
+# Returns: 0 if install succeeded and command is now available, 1 otherwise
+try_auto_install() {
+  local label="$1"
+  local npm_package="$2"
+  local cmd="$3"
+
+  if ! command -v npm &> /dev/null; then
+    echo -e "${YELLOW}⚠  npm not found — cannot auto-install $label${NC}" >&2
+    return 1
+  fi
+
+  echo -e "${YELLOW}⚠  $label not found. Installing via npm...${NC}" >&2
+  if npm install -g "$npm_package" 2>&1 | sed 's/^/  /' >&2; then
+    if command -v "$cmd" &> /dev/null; then
+      echo -e "${GREEN}✔  $label installed successfully${NC}" >&2
+      return 0
+    fi
+  fi
+
+  echo -e "${RED}❌ Auto-install failed for $label${NC}" >&2
+  return 1
+}
 
 # ============================================================================
 # Provider Validation
@@ -28,36 +59,43 @@ validate_provider() {
   case "$base_provider" in
     claude)
       if ! command -v claude &> /dev/null; then
-        echo -e "${RED}❌ Claude CLI not found${NC}"
-        echo ""
-        echo "Install Claude Code CLI:"
-        echo "  https://claude.ai/code"
-        echo ""
-        return 1
+        if ! try_auto_install "Claude CLI" "@anthropic-ai/claude-code" "claude"; then
+          echo -e "${RED}❌ Claude CLI not found${NC}"
+          echo ""
+          echo "Install Claude Code CLI:"
+          echo "  npm install -g @anthropic-ai/claude-code"
+          echo "  # or visit: https://claude.ai/code"
+          echo ""
+          return 1
+        fi
       fi
       ;;
     gemini)
       if ! command -v gemini &> /dev/null; then
-        echo -e "${RED}❌ Gemini CLI not found${NC}"
-        echo ""
-        echo "Install Gemini CLI:"
-        echo "  npm install -g @google/gemini-cli"
-        echo "  # or"
-        echo "  brew install gemini-cli"
-        echo ""
-        return 1
+        if ! try_auto_install "Gemini CLI" "@google/gemini-cli" "gemini"; then
+          echo -e "${RED}❌ Gemini CLI not found${NC}"
+          echo ""
+          echo "Install Gemini CLI:"
+          echo "  npm install -g @google/gemini-cli"
+          echo "  # or"
+          echo "  brew install gemini-cli"
+          echo ""
+          return 1
+        fi
       fi
       ;;
     codex)
       if ! command -v codex &> /dev/null; then
-        echo -e "${RED}❌ Codex CLI not found${NC}"
-        echo ""
-        echo "Install OpenAI Codex CLI:"
-        echo "  npm install -g @openai/codex"
-        echo "  # or"
-        echo "  brew install --cask codex"
-        echo ""
-        return 1
+        if ! try_auto_install "Codex CLI" "@openai/codex" "codex"; then
+          echo -e "${RED}❌ Codex CLI not found${NC}"
+          echo ""
+          echo "Install OpenAI Codex CLI:"
+          echo "  npm install -g @openai/codex"
+          echo "  # or"
+          echo "  brew install --cask codex"
+          echo ""
+          return 1
+        fi
       fi
       ;;
     opencode)
