@@ -269,7 +269,7 @@ execute_gemini() {
   
   # FIX: passing $prompt as -p argument fails with "Argument list too long"
   # when reviewing large PRs (ARG_MAX limit). Use stdin pipe instead.
-  local model="${GEMINI_MODEL:-gemini-2.5-pro}"
+  local model="${GEMINI_MODEL:-gemini-2.5-flash}"
   printf '%s' "$prompt" | gemini --model "$model" 2>&1
   return "${PIPESTATUS[1]}"
 }
@@ -881,7 +881,7 @@ execute_provider_with_timeout() {
       execute_with_timeout "$timeout" "Claude" bash -c "claude --print < \"\$1\" 2>&1" -- "$_prompt_file"
       ;;
     gemini)
-      execute_with_timeout "$timeout" "Gemini" bash -c "gemini --model \"\${GEMINI_MODEL:-gemini-2.5-pro}\" < \"\$1\" 2>&1" -- "$_prompt_file"
+      execute_with_timeout "$timeout" "Gemini" bash -c "gemini --model \"\${GEMINI_MODEL:-gemini-2.5-flash}\" < \"\$1\" 2>&1" -- "$_prompt_file"
       ;;
     codex)
       execute_with_timeout "$timeout" "Codex" codex exec "$prompt"
