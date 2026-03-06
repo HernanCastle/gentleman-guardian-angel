@@ -41,9 +41,9 @@ validate_provider() {
         echo -e "${RED}❌ Gemini CLI not found${NC}"
         echo ""
         echo "Install Gemini CLI:"
-        echo "  npm install -g @anthropic-ai/gemini-cli"
+        echo "  npm install -g @google/gemini-cli"
         echo "  # or"
-        echo "  brew install gemini"
+        echo "  brew install gemini-cli"
         echo ""
         return 1
       fi
